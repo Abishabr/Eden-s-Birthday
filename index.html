@@ -13,11 +13,11 @@
 
   <!-- Mute Button -->
   <button id="muteBtn" class="mute-btn" aria-label="Toggle sound">
-    <svg id="icoOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <svg id="icoOn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
       <path d="M11 5L6 9H2v6h4l5 4V5z"/>
       <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
     </svg>
-    <svg id="icoOff" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+    <svg id="icoOff" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
       <path d="M11 5L6 9H2v6h4l5 4V5z"/>
       <line x1="23" y1="9" x2="17" y2="15"/>
       <line x1="17" y1="9" x2="23" y2="15"/>
@@ -73,8 +73,8 @@
             <div class="env-seal" id="envSeal">
               <svg viewBox="0 0 44 44" aria-hidden="true">
                 <circle cx="22" cy="22" r="20" fill="#C9A86A" opacity="0.92"/>
-                <text x="50%" y="56%" dominant-baseline="middle" text-anchor="middle"
-                  font-family="Playfair Display" font-size="16" fill="#0B0B0D" font-style="italic">E</text>
+                <text x="50%" y="57%" dominant-baseline="middle" text-anchor="middle"
+                  font-family="Playfair Display, Georgia, serif" font-size="16" fill="#0B0B0D" font-style="italic">E</text>
               </svg>
             </div>
           </div>
@@ -86,22 +86,23 @@
       <div class="letter-box hidden" id="letterBox" role="dialog" aria-modal="true" aria-label="Birthday letter">
         <div class="letter-paper">
           <p class="ltr-date">28th of June, 2026</p>
-          <h2 class="ltr-salute">Dear Eden,</h2>
+          <h2 class="ltr-salute">Dear You,</h2>
           <div class="ltr-body">
-            <p>You have this way of making everything feel louder — the good moments, the annoying ones, even the quiet ones. You walk into a room and something shifts. I don't think you know you do it.</p>
-            <p>You frustrate me more than most people I know. You argue about things that don't need arguing, you make me laugh exactly when I'm trying to stay serious, and somehow that has become one of my favourite things about you. There is nobody quite like you in that way.</p>
-            <p>I see you, Eden — not just the version of you that is playful and bright and difficult in the best way, but the real one underneath all of that. The one that is worth knowing. And I am glad I do.</p>
-            <p>Today is yours. Not because of anything you did or achieved — just because you exist, and the world is genuinely better with you in it.</p>
+            <p>Today the world officially tolerates you a little more than usual — so try not to abuse that privilege too much.</p>
+            <p>You are basically chaos in human form: you argue about nothing, turn small things into debates, and somehow act innocent after starting everything. Peace doesn't really survive around you.</p>
+            <p>You're loud, funny, and extremely annoying — sometimes all at once — and the worst part is it actually makes you unforgettable.</p>
+            <p>Still, I'll admit it: you're genuinely beautiful. Unfortunately for everyone who has to deal with the rest of you.</p>
+            <p>So enjoy your day. Eat well, laugh loudly, and try (just try) not to start unnecessary arguments.</p>
           </div>
-          <p class="ltr-close">Written for you,</p>
-          <p class="ltr-sig">Someone who means every word.</p>
+          <p class="ltr-close">— Someone who has learned patience the hard way</p>
+          <p class="ltr-sig"></p>
           <button id="closeLetter" class="cta-btn cta-paper" aria-label="Continue to next">
             <span class="cta-text">Continue</span>
             <span class="cta-bar"></span>
           </button>
         </div>
       </div>
-    </div>
+    </div><!-- /stepEnvelope -->
 
     <!-- Step B: Bouquet -->
     <div class="rstep hidden" id="stepBouquet">
@@ -115,17 +116,22 @@
         </div>
         <div class="bouquet-shadow" aria-hidden="true"></div>
       </div>
-      <p class="bouquet-caption" id="bouquetCaption">"Some gifts don't need words."</p>
+      <p class="bouquet-caption" id="bouquetCaption">Some gifts don't need words.</p>
       <button id="bouquetContinue" class="cta-btn" aria-label="Continue">
         <span class="cta-text">Continue</span>
         <span class="cta-bar"></span>
       </button>
-    </div>
+    </div><!-- /stepBouquet -->
 
     <!-- Step C: Cake -->
     <div class="rstep hidden" id="stepCake">
+      <div class="cake-scene-header" id="cakeHeader">
+        <p class="scene-label-sm">Scene 5</p>
+        <h2 class="cake-scene-title">MAKE A WISH</h2>
+        <p class="cake-scene-sub">Close your eyes, make a wish,<br/>and blow out the candle.</p>
+      </div>
       <div class="cake-stage">
-        <img src="Assets/flower buncket.jpg" alt="" class="cake-bg-bouquet" aria-hidden="true" loading="lazy"/>
+        <canvas id="bokehCanvas" class="bokeh-canvas" aria-hidden="true"></canvas>
         <div class="cake-center" id="cakeCenter">
           <div class="cake-ambient" aria-hidden="true"></div>
           <div class="cake" aria-label="Birthday cake">
@@ -146,11 +152,16 @@
             </div>
             <div class="cake-base"></div>
           </div>
+          <div class="candle-hint" id="candleHint" aria-hidden="true">
+            <svg width="10" height="14" viewBox="0 0 10 14" fill="none" aria-hidden="true">
+              <line x1="5" y1="0" x2="5" y2="10" stroke="#C9A86A" stroke-width="1"/>
+              <path d="M2 8 L5 13 L8 8" stroke="#C9A86A" stroke-width="1" fill="none"/>
+            </svg>
+            Click the candle to blow it out
+          </div>
         </div>
       </div>
-      <p class="wish-text" id="wishText">Make a wish.</p>
-      <p class="wish-sub" id="wishSub">Click the candle</p>
-    </div>
+    </div><!-- /stepCake -->
 
   </div><!-- /s3 -->
 

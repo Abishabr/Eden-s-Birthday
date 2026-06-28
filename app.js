@@ -1,6 +1,6 @@
 /**
  * Eden's Birthday — Luxury Cinematic Experience
- * 4 scenes: Reserved Delivery → Verification → The Reveal → Celebration
+ * Scenes: Reserved Delivery → Verification → The Reveal (Envelope → Bouquet → Cake) → Celebration
  */
 'use strict';
 
@@ -49,19 +49,19 @@ function loadScript(src) {
 ──────────────────────────────────────────────────────────── */
 const dom = {
   // Scene 1
-  s1:          $('s1'),
-  s1Eyebrow:   $('s1Eyebrow'),
-  s1Heading:   $('s1Heading'),
-  s1Sub:       $('s1Sub'),
-  caseWrap:    $('caseWrap'),
-  caseCanvas:  $('caseCanvas'),
-  nameplate:   $('nameplate'),
-  verifyBtn:   $('verifyBtn'),
+  s1:              $('s1'),
+  s1Eyebrow:       $('s1Eyebrow'),
+  s1Heading:       $('s1Heading'),
+  s1Sub:           $('s1Sub'),
+  caseWrap:        $('caseWrap'),
+  caseCanvas:      $('caseCanvas'),
+  nameplate:       $('nameplate'),
+  verifyBtn:       $('verifyBtn'),
   // Scene 2
-  s2:          $('s2'),
-  authCanvas:  $('authCanvas'),
-  authStatus:  $('authStatus'),
-  authFill:    $('authFill'),
+  s2:              $('s2'),
+  authCanvas:      $('authCanvas'),
+  authStatus:      $('authStatus'),
+  authFill:        $('authFill'),
   // Scene 3
   s3:              $('s3'),
   stepEnvelope:    $('stepEnvelope'),
@@ -79,25 +79,23 @@ const dom = {
   candle:          $('candle'),
   flameWrap:       $('flameWrap'),
   flame:           $('flame'),
-  wishText:        $('wishText'),
-  wishSub:         $('wishSub'),
   cakeCenter:      $('cakeCenter'),
   // Scene 4
-  s4:          $('s4'),
-  celebCanvas: $('celebCanvas'),
-  celebContent:$('celebContent'),
-  celebHeading:$('celebHeading'),
+  s4:              $('s4'),
+  celebCanvas:     $('celebCanvas'),
+  celebContent:    $('celebContent'),
+  celebHeading:    $('celebHeading'),
   // Mute
-  muteBtn:  $('muteBtn'),
-  icoOn:    $('icoOn'),
-  icoOff:   $('icoOff')
+  muteBtn:         $('muteBtn'),
+  icoOn:           $('icoOn'),
+  icoOff:          $('icoOff')
 };
 
 let gsap; // assigned after CDN load
 
 /* ════════════════════════════════════════════════════════════
    AUDIO MODULE
-   Layers: ambient pads + orchestral swell + auth tone
+   Layers: ambient drone pads + orchestral swell + auth tone
 ════════════════════════════════════════════════════════════ */
 const Audio = (() => {
   let ctx, master, ambGain, orchGain;
@@ -119,9 +117,11 @@ const Audio = (() => {
 
   function init() {
     try {
-      ctx = new (window.AudioContext || window.webkitAudioContext)();
-      master   = ctx.createGain(); master.gain.value = 1; master.connect(ctx.destination);
-      ambGain  = ctx.createGain(); ambGain.gain.value = 0; ambGain.connect(master);
+      const AudioCtx = window.AudioContext || (window.webkitAudioContext || null);
+      if (!AudioCtx) return;
+      ctx      = new AudioCtx();
+      master   = ctx.createGain(); master.gain.value = 1;   master.connect(ctx.destination);
+      ambGain  = ctx.createGain(); ambGain.gain.value = 0;  ambGain.connect(master);
       orchGain = ctx.createGain(); orchGain.gain.value = 0; orchGain.connect(master);
     } catch (e) { console.warn('Web Audio API unavailable:', e.message); }
   }
@@ -141,7 +141,6 @@ const Audio = (() => {
       const g   = ctx.createGain();
       osc.type = 'sine'; osc.frequency.value = freq; g.gain.value = vol;
       osc.connect(g); g.connect(filt); osc.start();
-      // gentle micro-drift
       setInterval(() => {
         osc.frequency.setTargetAtTime(freq + (Math.random() * 2 - 1), ctx.currentTime, 8);
       }, 9000);
@@ -170,7 +169,7 @@ const Audio = (() => {
     });
 
     filt.connect(rev); rev.connect(g); g.connect(orchGain);
-    // crossfade: ambient down, orchestral up
+    // Crossfade: ambient down, orchestral up
     ambGain.gain.setTargetAtTime(0.06, ctx.currentTime, 2);
     orchGain.gain.setTargetAtTime(0.36, ctx.currentTime, 3);
   }
@@ -205,7 +204,6 @@ let threeRenderer, threeScene, threeCamera;
 let caseGroup;
 let mouseTargetX = 0, mouseTargetY = 0;
 let mouseCurrentX = 0, mouseCurrentY = 0;
-let caseFloatTween;
 
 async function initCase() {
   try {
@@ -225,16 +223,16 @@ function buildCase(T) {
 
   /* ── Renderer ── */
   threeRenderer = new T.WebGLRenderer({
-    canvas:           dom.caseCanvas,
-    antialias:        true,
-    alpha:            false,
-    powerPreference:  'high-performance'
+    canvas:          dom.caseCanvas,
+    antialias:       true,
+    alpha:           false,
+    powerPreference: 'high-performance'
   });
   threeRenderer.setSize(W, H);
   threeRenderer.setPixelRatio(Math.min(devicePixelRatio, 2));
-  threeRenderer.shadowMap.enabled  = true;
-  threeRenderer.shadowMap.type     = T.PCFSoftShadowMap;
-  threeRenderer.toneMapping        = T.ACESFilmicToneMapping;
+  threeRenderer.shadowMap.enabled   = true;
+  threeRenderer.shadowMap.type      = T.PCFSoftShadowMap;
+  threeRenderer.toneMapping         = T.ACESFilmicToneMapping;
   threeRenderer.toneMappingExposure = 1.15;
   threeRenderer.setClearColor(0x0d0c0a, 1);
 
@@ -267,14 +265,10 @@ function buildCase(T) {
 
   /* ── Materials ── */
   const matteMat = new T.MeshStandardMaterial({
-    color:     0x1c1c22,
-    roughness: 0.88,
-    metalness: 0.12
+    color: 0x1c1c22, roughness: 0.88, metalness: 0.12
   });
   const goldMat = new T.MeshStandardMaterial({
-    color:     0xc9a86a,
-    roughness: 0.26,
-    metalness: 0.68
+    color: 0xc9a86a, roughness: 0.26, metalness: 0.68
   });
 
   /* ── Case Group ── */
@@ -282,76 +276,55 @@ function buildCase(T) {
   threeScene.add(caseGroup);
 
   // Body: BoxGeometry(3.2, 0.6, 2.2)
-  const bodyMesh = new T.Mesh(
-    new T.BoxGeometry(3.2, 0.6, 2.2),
-    matteMat
-  );
+  const bodyMesh = new T.Mesh(new T.BoxGeometry(3.2, 0.6, 2.2), matteMat);
   bodyMesh.position.y = 0;
-  bodyMesh.castShadow   = true;
-  bodyMesh.receiveShadow = true;
+  bodyMesh.castShadow = bodyMesh.receiveShadow = true;
   caseGroup.add(bodyMesh);
 
   // Lid: BoxGeometry(3.24, 0.08, 2.24) sitting on top
-  const lidMesh = new T.Mesh(
-    new T.BoxGeometry(3.24, 0.08, 2.24),
-    matteMat
-  );
+  const lidMesh = new T.Mesh(new T.BoxGeometry(3.24, 0.08, 2.24), matteMat);
   lidMesh.position.y = 0.34;
   lidMesh.castShadow = true;
   caseGroup.add(lidMesh);
 
-  // Gold trim — thin strips along edges of body
+  // 8 Gold trim strips along edges
   const trimConfigs = [
-    // Top-front edge
     { size: [3.28, 0.05, 0.05], pos: [ 0,  0.32,  1.12] },
-    // Top-back edge
     { size: [3.28, 0.05, 0.05], pos: [ 0,  0.32, -1.12] },
-    // Top-left edge
-    { size: [0.05, 0.05, 2.28], pos: [-1.63, 0.32, 0] },
-    // Top-right edge
-    { size: [0.05, 0.05, 2.28], pos: [ 1.63, 0.32, 0] },
-    // Bottom-front edge
+    { size: [0.05, 0.05, 2.28], pos: [-1.63, 0.32,  0]  },
+    { size: [0.05, 0.05, 2.28], pos: [ 1.63, 0.32,  0]  },
     { size: [3.28, 0.05, 0.05], pos: [ 0, -0.32,  1.12] },
-    // Bottom-back edge
     { size: [3.28, 0.05, 0.05], pos: [ 0, -0.32, -1.12] },
-    // Bottom-left edge
-    { size: [0.05, 0.05, 2.28], pos: [-1.63, -0.32, 0] },
-    // Bottom-right edge
-    { size: [0.05, 0.05, 2.28], pos: [ 1.63, -0.32, 0] }
+    { size: [0.05, 0.05, 2.28], pos: [-1.63, -0.32, 0]  },
+    { size: [0.05, 0.05, 2.28], pos: [ 1.63, -0.32, 0]  }
   ];
-
   trimConfigs.forEach(({ size, pos }) => {
     const trim = new T.Mesh(new T.BoxGeometry(...size), goldMat);
     trim.position.set(...pos);
     caseGroup.add(trim);
   });
 
-  /* ── Reflective ground plane ── */
-  const shadow = new T.Mesh(
+  /* ── Shadow plane ── */
+  const shadowPlane = new T.Mesh(
     new T.PlaneGeometry(14, 14),
     new T.ShadowMaterial({ opacity: 0.28 })
   );
-  shadow.rotation.x = -Math.PI / 2;
-  shadow.position.y = -0.32;
-  shadow.receiveShadow = true;
-  threeScene.add(shadow);
+  shadowPlane.rotation.x = -Math.PI / 2;
+  shadowPlane.position.y = -0.32;
+  shadowPlane.receiveShadow = true;
+  threeScene.add(shadowPlane);
 
-  /* ── Gentle float via GSAP ── */
-  function startFloat() {
+  /* ── Gentle float via GSAP (called after GSAP loads) ── */
+  window.__startCaseFloat = function startFloat() {
     if (!gsap || state.reducedMotion) return;
-    caseFloatTween = gsap.to(caseGroup.position, {
+    gsap.to(caseGroup.position, {
       y:        0.12,
       duration: 3.2,
       ease:     'sine.inOut',
       yoyo:     true,
       repeat:   -1
     });
-  }
-  // Called after GSAP loads
-  window.__startCaseFloat = startFloat;
-
-  /* ── Render loop ── */
-  renderLoop();
+  };
 
   /* ── Resize ── */
   window.addEventListener('resize', () => {
@@ -360,6 +333,9 @@ function buildCase(T) {
     threeCamera.updateProjectionMatrix();
     threeRenderer.setSize(nw, nh);
   });
+
+  /* ── Start render loop ── */
+  renderLoop();
 }
 
 function renderLoop() {
@@ -379,13 +355,13 @@ function renderLoop() {
    Concentric pulsing rings + radial fingerprint lines + scan line
 ════════════════════════════════════════════════════════════ */
 function drawAuth(canvas) {
-  const ctx   = canvas.getContext('2d');
-  const W     = canvas.width  || 240;
-  const H     = canvas.height || 240;
-  const cx    = W / 2;
-  const cy    = H / 2;
-  const outerR = W * 0.44;
-  const innerR = W * 0.28;
+  const ctx     = canvas.getContext('2d');
+  const W       = canvas.width  || 240;
+  const H       = canvas.height || 240;
+  const cx      = W / 2;
+  const cy      = H / 2;
+  const outerR  = W * 0.44;
+  const innerR  = W * 0.28;
   const lineCount = 28;
 
   let scanY   = cy - innerR;
@@ -397,7 +373,7 @@ function drawAuth(canvas) {
     ctx.clearRect(0, 0, W, H);
     tick++;
 
-    /* ── Concentric pulsing rings ── */
+    /* Concentric pulsing rings */
     [outerR, outerR * 0.78, outerR * 0.56].forEach((r, i) => {
       const pulse = 0.3 + 0.25 * Math.sin(tick * 0.035 + i * 1.2);
       ctx.beginPath();
@@ -407,7 +383,7 @@ function drawAuth(canvas) {
       ctx.stroke();
     });
 
-    /* ── Radial fingerprint lines inside inner circle ── */
+    /* Radial fingerprint lines inside inner circle */
     for (let i = 0; i < lineCount; i++) {
       const angle   = (i / lineCount) * Math.PI * 2;
       const wobble  = Math.sin(tick * 0.04 + i * 0.7) * 0.04;
@@ -424,27 +400,24 @@ function drawAuth(canvas) {
       ctx.stroke();
     }
 
-    /* ── Scan line top-to-bottom inside inner circle ── */
+    /* Scan line top-to-bottom inside inner circle */
     scanY += 1.8;
     if (scanY > cy + innerR) scanY = cy - innerR;
 
-    // Clip to inner circle region
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
     ctx.clip();
 
-    // Scan line gradient
     const grad = ctx.createLinearGradient(0, scanY - 12, 0, scanY + 4);
-    grad.addColorStop(0, 'rgba(201,168,106,0)');
+    grad.addColorStop(0,   'rgba(201,168,106,0)');
     grad.addColorStop(0.6, 'rgba(201,168,106,0.55)');
-    grad.addColorStop(1, 'rgba(201,168,106,0)');
+    grad.addColorStop(1,   'rgba(201,168,106,0)');
     ctx.fillStyle = grad;
     ctx.fillRect(cx - innerR, scanY - 12, innerR * 2, 16);
-
     ctx.restore();
 
-    /* ── Center dot ── */
+    /* Center dot */
     const dotPulse = 0.5 + 0.4 * Math.sin(tick * 0.07);
     ctx.beginPath();
     ctx.arc(cx, cy, 3, 0, Math.PI * 2);
@@ -465,25 +438,29 @@ function drawAuth(canvas) {
 ════════════════════════════════════════════════════════════ */
 function animateArrival() {
   const d = state.reducedMotion ? 0.01 : 1;
-
   const tl = gsap.timeline({ delay: 0.2 });
 
-  // Stagger: eyebrow → heading → sub → caseCanvas/nameplate → verifyBtn
   tl.to(dom.s1Eyebrow, {
     opacity: 1, duration: d * 1.1, ease: 'power2.out'
   }, 0);
 
-  tl.fromTo(dom.s1Heading, { y: 14, opacity: 0 }, {
-    y: 0, opacity: 1, duration: d * 1.3, ease: 'power2.out'
-  }, `+=${0.22 * d}`);
+  tl.fromTo(dom.s1Heading,
+    { y: 14, opacity: 0 },
+    { y: 0, opacity: 1, duration: d * 1.3, ease: 'power2.out' },
+    `+=${0.22 * d}`
+  );
 
-  tl.fromTo(dom.s1Sub, { y: 8, opacity: 0 }, {
-    y: 0, opacity: 1, duration: d * 1.1, ease: 'power2.out'
-  }, `+=${0.18 * d}`);
+  tl.fromTo(dom.s1Sub,
+    { y: 8, opacity: 0 },
+    { y: 0, opacity: 1, duration: d * 1.1, ease: 'power2.out' },
+    `+=${0.18 * d}`
+  );
 
-  tl.fromTo(dom.caseWrap, { opacity: 0, y: state.reducedMotion ? 0 : 20 }, {
-    opacity: 1, y: 0, duration: d * 1.4, ease: 'power1.out'
-  }, `+=${0.1 * d}`);
+  tl.fromTo(dom.caseWrap,
+    { opacity: 0, y: state.reducedMotion ? 0 : 20 },
+    { opacity: 1, y: 0, duration: d * 1.4, ease: 'power1.out' },
+    `+=${0.1 * d}`
+  );
 
   tl.to(dom.nameplate, {
     opacity: 1, duration: d * 1.0, ease: 'power2.out'
@@ -493,7 +470,6 @@ function animateArrival() {
     opacity: 1, duration: d * 0.9, ease: 'power2.out'
   }, `+=${0.18 * d}`);
 
-  // Start floating animation for the 3D case
   tl.call(() => {
     if (typeof window.__startCaseFloat === 'function') window.__startCaseFloat();
   });
@@ -508,14 +484,13 @@ function startVerification() {
   if (state.transitioning) return;
   state.transitioning = true;
 
-  // Start audio on first interaction
+  // Start audio on first user interaction
   if (!state.audioStarted) {
     try { Audio.startAmbient(); state.audioStarted = true; } catch(e) {}
   }
 
   const d = state.reducedMotion ? 0.01 : 1;
 
-  // Fade out scene 1
   gsap.to(dom.s1, {
     opacity: 0,
     duration: d * 0.7,
@@ -530,15 +505,13 @@ function startVerification() {
 function showAuthScene() {
   const d = state.reducedMotion ? 0.01 : 1;
 
-  // Show s2
   dom.s2.classList.add('on');
   dom.s2.setAttribute('aria-hidden', 'false');
 
-  // Start auth canvas
   authController = drawAuth(dom.authCanvas);
   authController.start();
 
-  // Animate progress bar 0 → 100% over 2.5s
+  // Progress bar 0 → 100% over 2.5s
   gsap.to(dom.authFill, {
     width: '100%',
     duration: 2.5,
@@ -547,9 +520,9 @@ function showAuthScene() {
 
   // Status text sequence
   const statusSteps = [
-    { text: 'Scanning…',          delay: 0    },
-    { text: 'Verifying…',         delay: 1.1  },
-    { text: 'Identity Confirmed', delay: 2.4  }
+    { text: 'Scanning…',          delay: 0   },
+    { text: 'Verifying…',         delay: 1.1 },
+    { text: 'Identity Confirmed', delay: 2.4 }
   ];
 
   statusSteps.forEach(({ text, delay }) => {
@@ -564,11 +537,12 @@ function showAuthScene() {
     });
   });
 
-  // After confirmation: play tone + transition to Scene 3
+  // Auth tone at 2.8s
   gsap.delayedCall(2.8 * d, () => {
     try { Audio.playAuthTone(); } catch(e) {}
   });
 
+  // Transition to Scene 3 at 3.6s
   gsap.delayedCall(3.6 * d, () => {
     if (authController) authController.stop();
     gsap.to(dom.s2, {
@@ -608,20 +582,20 @@ function openEnvelope() {
   if (state.transitioning) return;
   state.transitioning = true;
 
-  const d = state.reducedMotion ? 0.01 : 1;
+  const d   = state.reducedMotion ? 0.01 : 1;
   const env = dom.envelope;
 
-  // Step 1: Envelope lifts slightly toward viewer (scale + shadow)
+  // Step 1: Envelope lifts slightly
   gsap.to(env, {
     scale: 1.04,
     y: -12,
     duration: d * 0.5,
     ease: 'power2.out',
     onComplete: () => {
-      // Step 2: Flap opens
+      // Step 2: Add .opening class to trigger CSS flap rotation
       env.classList.add('opening');
 
-      // Step 3: Envelope settles back down while flap is opening
+      // Step 3: Envelope settles back down
       gsap.to(env, {
         scale: 1,
         y: 0,
@@ -630,7 +604,7 @@ function openEnvelope() {
         delay: d * 0.2
       });
 
-      // Step 4: Show letter after flap animation completes
+      // Step 4: Show letter after flap animation completes (~1050ms)
       setTimeout(() => {
         showLetter();
       }, state.reducedMotion ? 50 : 1050);
@@ -652,7 +626,6 @@ function showLetter() {
       ease: 'power2.out',
       onComplete: () => {
         state.transitioning = false;
-        // Focus close button for accessibility
         if (dom.closeLetter) dom.closeLetter.focus();
       }
     }
@@ -702,14 +675,13 @@ function showBouquet() {
     `-=${d * 0.8}`
   );
 
-  // Continue button
+  // Continue button fades in
   tl.to(dom.bouquetContinue, {
     opacity: 1, duration: d * 0.7, ease: 'power2.out'
   }, `-=${d * 0.4}`);
 
-  // Continuous GSAP animations on rotator
+  // Continuous float and rotation animations
   if (!state.reducedMotion) {
-    // Gentle rotateY yoyo
     gsap.to(dom.bouquetRotator, {
       rotateY:  3,
       duration: 4,
@@ -718,7 +690,6 @@ function showBouquet() {
       repeat:   -1,
       delay:    0.5
     });
-    // Float up/down on the stage
     gsap.to(dom.bouquetStage, {
       y:        -12,
       duration: 3.8,
@@ -739,7 +710,6 @@ function showCake() {
 
   const d = state.reducedMotion ? 0.01 : 1;
 
-  // Fade out bouquet step
   gsap.to(dom.stepBouquet, {
     opacity: 0,
     duration: d * 0.6,
@@ -755,29 +725,75 @@ function showCake() {
 function animateCakeEntrance() {
   const d = state.reducedMotion ? 0.01 : 1;
 
+  // Start bokeh background first
+  initBokehCanvas();
+
   const tl = gsap.timeline({
-    onComplete: () => { state.transitioning = false; }
+    onComplete: () => {
+      state.transitioning = false;
+      const hint = $('candleHint');
+      if (hint) hint.classList.add('visible');
+    }
   });
 
-  tl.fromTo(dom.cakeCenter,
-    { y: state.reducedMotion ? 0 : 55, opacity: 0 },
-    { y: 0, opacity: 1, duration: d * 1.8, ease: 'power1.out' },
+  // Header fades in
+  tl.fromTo($('cakeHeader'),
+    { opacity: 0, y: state.reducedMotion ? 0 : 14 },
+    { opacity: 1, y: 0, duration: d * 1.0, ease: 'power2.out' },
     0
   );
 
-  tl.fromTo(dom.wishText,
-    { opacity: 0, y: 10 },
-    { opacity: 1, y: 0, duration: d * 1.0, ease: 'power2.out' },
-    `-=${d * 0.6}`
-  );
-
-  tl.fromTo(dom.wishSub,
-    { opacity: 0 },
-    { opacity: 1, duration: d * 0.8, ease: 'power2.out' },
-    `-=${d * 0.4}`
+  // Cake rises from below
+  tl.fromTo(dom.cakeCenter,
+    { y: state.reducedMotion ? 0 : 60, opacity: 0 },
+    { y: 0, opacity: 1, duration: d * 2.0, ease: 'power1.out' },
+    d * 0.3
   );
 }
 
+/* ── Bokeh Canvas — warm out-of-focus light circles ── */
+function initBokehCanvas() {
+  const canvas = $('bokehCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width  = canvas.parentElement.offsetWidth  || 800;
+  canvas.height = canvas.parentElement.offsetHeight || 480;
+
+  // 18 warm bokeh circles — amber/gold, very soft
+  const dots = Array.from({ length: 18 }, () => ({
+    x:     Math.random() * canvas.width,
+    y:     Math.random() * canvas.height,
+    r:     20 + Math.random() * 55,
+    alpha: 0.04 + Math.random() * 0.10,
+    vx:    (Math.random() - 0.5) * 0.15,
+    vy:    (Math.random() - 0.5) * 0.08,
+    h:     Math.random() > 0.5 ? '201,150,80' : '180,120,50'
+  }));
+
+  function drawBokeh() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    dots.forEach(dot => {
+      const g = ctx.createRadialGradient(dot.x, dot.y, 0, dot.x, dot.y, dot.r);
+      g.addColorStop(0, `rgba(${dot.h},${dot.alpha})`);
+      g.addColorStop(1, `rgba(${dot.h},0)`);
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(dot.x, dot.y, dot.r, 0, Math.PI * 2);
+      ctx.fill();
+
+      dot.x += dot.vx;
+      dot.y += dot.vy;
+      if (dot.x < -dot.r) dot.x = canvas.width + dot.r;
+      if (dot.x > canvas.width + dot.r) dot.x = -dot.r;
+      if (dot.y < -dot.r) dot.y = canvas.height + dot.r;
+      if (dot.y > canvas.height + dot.r) dot.y = -dot.r;
+    });
+    requestAnimationFrame(drawBokeh);
+  }
+  drawBokeh();
+}
+
+/* ── Blow Candle ── */
 function blowCandle() {
   if (state.candleBlown || state.transitioning) return;
   state.candleBlown   = true;
@@ -785,7 +801,7 @@ function blowCandle() {
 
   const d = state.reducedMotion ? 0.01 : 1;
 
-  // 1. Candle flickers rapidly before going out
+  // 1. Rapid pre-flicker before going out
   if (!state.reducedMotion && dom.flame) {
     gsap.to(dom.flame, {
       scaleX: 1.4, scaleY: 0.6, duration: 0.08,
@@ -797,19 +813,19 @@ function blowCandle() {
   }
 
   function extinguish() {
-    // 2. Flame shrinks and dies
+    // 2. Flame shrinks and disappears
     gsap.to(dom.flameWrap, {
       scaleY: 0, scaleX: 0.2, opacity: 0,
       duration: d * 0.3, ease: 'power2.in',
       onComplete: () => {
         dom.candle.classList.add('blown');
 
-        // 3. Warm gold glow on the cake dims slowly
+        // 3. Ambient glow dims
         gsap.to('.cake-ambient', {
           opacity: 0, duration: d * 1.2, ease: 'power1.in'
         });
 
-        // 4. Brief dark vignette — room darkens
+        // 4. Dark vignette — room moment of darkness
         const overlay = document.createElement('div');
         overlay.style.cssText =
           'position:fixed;inset:0;background:radial-gradient(ellipse at center,#0a0800 0%,#000 100%);opacity:0;z-index:9998;pointer-events:none;';
@@ -828,7 +844,7 @@ function blowCandle() {
               delay: d * 0.15,
               onComplete: () => {
                 document.body.removeChild(overlay);
-                // 5. Transition to celebration
+                // 5. Transition to Celebration
                 gsap.to(dom.stepCake, {
                   opacity: 0, duration: d * 0.6, ease: 'power2.in',
                   onComplete: () => {
@@ -856,13 +872,13 @@ function showCelebration() {
   dom.s4.classList.add('on');
   dom.s4.setAttribute('aria-hidden', 'false');
 
-  // Switch to orchestral
+  // Switch to orchestral audio
   try { Audio.toOrchestral(); } catch(e) {}
 
   // Start celebration canvas
   initCelebCanvas();
 
-  // Content stagger fade-in
+  // Stagger content children in
   const items = dom.celebContent.children;
   const tl = gsap.timeline({ delay: 0.3 });
 
@@ -874,7 +890,7 @@ function showCelebration() {
     );
   });
 
-  // Subtle camera-pull: scale 1.06 → 1 over 3.5s
+  // Subtle scale-in
   if (!state.reducedMotion) {
     gsap.fromTo(dom.celebContent,
       { scale: 1.06 },
@@ -887,8 +903,8 @@ function showCelebration() {
 
 /* ════════════════════════════════════════════════════════════
    CELEBRATION CANVAS
-   25 soft gold particles + 3-4 expanding ring bursts
-   NO confetti, NO sparks, NO bright colours
+   25 soft gold particles + periodic expanding ring bursts
+   Stroke-only rings, no sparks, no confetti
 ════════════════════════════════════════════════════════════ */
 function initCelebCanvas() {
   const canvas = dom.celebCanvas;
@@ -898,7 +914,7 @@ function initCelebCanvas() {
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
 
-  /* ── 25 soft floating particles ── */
+  /* 25 soft floating gold particles */
   const particles = Array.from({ length: 25 }, () => ({
     x:     Math.random() * canvas.width,
     y:     canvas.height + Math.random() * 80,
@@ -909,9 +925,9 @@ function initCelebCanvas() {
     hue:   Math.random() > 0.55 ? '201,168,106' : '228,205,150'
   }));
 
-  /* ── Ring burst system ── */
+  /* Ring burst system */
   const rings = [];
-  let   frameTick = 0;
+  let frameTick = 0;
 
   function spawnRing() {
     rings.push({
@@ -934,7 +950,7 @@ function initCelebCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     frameTick++;
 
-    /* Particles */
+    /* Draw particles */
     particles.forEach(p => {
       const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 3);
       grad.addColorStop(0, `rgba(${p.hue},${p.alpha})`);
@@ -957,7 +973,7 @@ function initCelebCanvas() {
       }
     });
 
-    /* Rings — expand and fade, stroke only */
+    /* Draw and update rings — stroke only, no fill */
     for (let i = rings.length - 1; i >= 0; i--) {
       const ring = rings[i];
       ctx.beginPath();
@@ -983,7 +999,6 @@ function initCelebCanvas() {
   window.addEventListener('resize', () => {
     canvas.width  = window.innerWidth;
     canvas.height = window.innerHeight;
-    // Redistribute particles
     particles.forEach(p => {
       if (p.x > canvas.width) p.x = Math.random() * canvas.width;
     });
@@ -995,56 +1010,56 @@ function initCelebCanvas() {
 ════════════════════════════════════════════════════════════ */
 function bindEvents() {
 
-  /* ── Scene 1: Verify button ── */
+  /* Scene 1: Verify button */
   dom.verifyBtn.addEventListener('click', startVerification);
   dom.verifyBtn.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startVerification(); }
   });
 
-  /* ── Scene 3 Step A: Open envelope ── */
+  /* Scene 3 Step A: Open envelope */
   dom.envelope.addEventListener('click', openEnvelope);
   dom.envelope.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openEnvelope(); }
   });
 
-  /* ── Scene 3 Step A: Close letter / show bouquet ── */
+  /* Scene 3 Step A: Close letter → show bouquet */
   dom.closeLetter.addEventListener('click', closeLetterAndShowBouquet);
   dom.closeLetter.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); closeLetterAndShowBouquet(); }
   });
 
-  /* ── Scene 3 Step B: Bouquet continue ── */
+  /* Scene 3 Step B: Bouquet continue → show cake */
   dom.bouquetContinue.addEventListener('click', showCake);
   dom.bouquetContinue.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showCake(); }
   });
 
-  /* ── Scene 3 Step C: Candle click ── */
+  /* Scene 3 Step C: Candle click → blow out */
   dom.candle.addEventListener('click', blowCandle);
   dom.candle.addEventListener('keydown', e => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); blowCandle(); }
   });
 
-  /* ── Mouse parallax for Three.js case ── */
+  /* Mouse parallax for Three.js case (±8 degrees) */
   document.addEventListener('mousemove', e => {
     if (state.isTouchDevice) return;
-    // ±8 degrees mapped to mouse position
     const nx = (e.clientX / window.innerWidth)  - 0.5;
     const ny = (e.clientY / window.innerHeight) - 0.5;
     mouseTargetX =  nx * 2 * (8 * Math.PI / 180);
     mouseTargetY = -ny * 2 * (8 * Math.PI / 180);
   });
 
-  /* ── Cursor parallax for bouquet ── */
+  /* Cursor parallax for bouquet rotator */
   document.addEventListener('mousemove', e => {
-    if (!dom.bouquetRotator || dom.stepBouquet.classList.contains('hidden')) return;
+    if (!dom.bouquetRotator) return;
+    if (dom.stepBouquet.classList.contains('hidden')) return;
     if (state.isTouchDevice) return;
     const nx = (e.clientX / window.innerWidth  - 0.5) * 10;
     const ny = (e.clientY / window.innerHeight - 0.5) * 8;
     dom.bouquetRotator.style.transform = `rotateY(${nx}deg) rotateX(${-ny}deg)`;
   });
 
-  /* ── Touch device detection ── */
+  /* Touch device detection */
   window.addEventListener('touchstart', () => {
     state.isTouchDevice = true;
     // Touch auto-rotate for case
@@ -1058,7 +1073,7 @@ function bindEvents() {
     }
   }, { once: true });
 
-  /* ── Mute toggle ── */
+  /* Mute toggle */
   dom.muteBtn.addEventListener('click', () => {
     state.muted = !state.muted;
     dom.icoOn.style.display  = state.muted ? 'none'  : 'block';
@@ -1067,7 +1082,7 @@ function bindEvents() {
     try { Audio.mute(state.muted); } catch(e) {}
   });
 
-  /* ── Pause GSAP on tab-blur ── */
+  /* Pause GSAP on tab-blur */
   document.addEventListener('visibilitychange', () => {
     if (!gsap) return;
     if (document.hidden) gsap.globalTimeline.pause();
@@ -1098,28 +1113,37 @@ async function boot() {
     gsap = window.gsap;
     if (!gsap) throw new Error('GSAP not found on window');
   } catch(e) {
-    console.error('GSAP failed:', e.message);
-    // Graceful degradation — show content without animation
+    console.error('GSAP failed to load:', e.message);
     document.body.classList.add('ready');
     return;
   }
 
-  // 2. Initialise audio context (must be before first interaction on some browsers)
+  // 2. Initialise audio context
   try { Audio.init(); } catch(e) {}
 
-  // 3. Load Three.js (non-blocking)
-  initCase().then(() => {
-    // Start arrival animations once 3D is ready
+  // 3. Load Three.js and start 3D case (non-blocking)
+  let arrivalFired = false;
+
+  function fireArrival() {
+    if (arrivalFired) return;
+    arrivalFired = true;
     animateArrival();
+  }
+
+  initCase().then(() => {
+    fireArrival();
+  }).catch(() => {
+    fireArrival();
   });
 
-  // Fallback: if Three.js takes too long, run arrival anyway
-  const fallbackTimer = setTimeout(() => {
-    if (!state.threeReady) animateArrival();
-  }, 4200);
+  // Fallback: run arrival if Three.js takes too long
+  const fallbackTimer = setTimeout(fireArrival, 4200);
 
-  // Clear fallback if Three.js resolves quickly
-  initCase._fallbackClear = () => clearTimeout(fallbackTimer);
+  // Clear fallback when Three.js resolves
+  const origInitCase = initCase;
+  Promise.resolve().then(() => {
+    clearTimeout(fallbackTimer);
+  });
 
   // 4. Bind all events
   bindEvents();
@@ -1127,7 +1151,7 @@ async function boot() {
   // 5. Smooth scroll
   initLenis();
 
-  // 6. Mark body ready (triggers CSS opacity:1)
+  // 6. Mark body ready (triggers CSS fade-in)
   document.body.classList.add('ready');
 }
 

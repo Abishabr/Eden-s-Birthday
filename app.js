@@ -464,20 +464,26 @@ function runCakeScene() {
   const tl = gsap.timeline({
     onComplete: () => {
       state.transitioning = false;
-      setTimeout(showCelebration, state.reducedMotion ? 400 : 2200);
+      // Longer pause so cake scene is clearly distinct from celebration
+      setTimeout(showCelebration, state.reducedMotion ? 400 : 3500);
     }
   });
 
-  // Cake rises
-  tl.fromTo(dom.cakeWrapper, { opacity: 0, y: state.reducedMotion ? 0 : 50 }, {
-    opacity: 1, y: 0, duration: state.reducedMotion ? 0.1 : 1.8, ease: 'power1.out'
-  }, 0.3);
+  // Scene label
+  tl.fromTo($('cakeSceneLabel'), { opacity: 0, y: 8 }, {
+    opacity: 1, y: 0, duration: d * 0.7, ease: 'power2.out'
+  }, 0.2);
 
-  // Text stagger
-  const delay = state.reducedMotion ? 0 : 0.45;
-  tl.to(dom.sLine1, { opacity: 1, y: 0, duration: d * 0.7, ease: 'power2.out' }, '-=0.4');
-  tl.to(dom.sLine2, { opacity: 1, y: 0, duration: d * 0.7, ease: 'power2.out' }, `+=${delay}`);
-  tl.to(dom.sLine3, { opacity: 1, y: 0, duration: d * 0.7, ease: 'power2.out' }, `+=${delay}`);
+  // Cake rises with warm glow
+  tl.fromTo(dom.cakeWrapper, { opacity: 0, y: state.reducedMotion ? 0 : 55 }, {
+    opacity: 1, y: 0, duration: state.reducedMotion ? 0.1 : 2.0, ease: 'power1.out'
+  }, 0.5);
+
+  // Text stagger — slower, more cinematic
+  const delay = state.reducedMotion ? 0 : 0.55;
+  tl.to(dom.sLine1, { opacity: 1, y: 0, duration: d * 0.8, ease: 'power2.out' }, '-=0.3');
+  tl.to(dom.sLine2, { opacity: 1, y: 0, duration: d * 0.8, ease: 'power2.out' }, `+=${delay}`);
+  tl.to(dom.sLine3, { opacity: 1, y: 0, duration: d * 0.8, ease: 'power2.out' }, `+=${delay}`);
 }
 
 function buildCake() {
@@ -534,9 +540,19 @@ function initCakeParticles() {
   draw();
 }
 
-// ── Scene 6 — Celebration ─────────────────────────────────────────────────────
 function showCelebration() {
-  dom.scene5.classList.remove('active');
+  // Fade Scene 5 out completely first — creates a clear visual break
+  gsap.to(dom.scene5, {
+    opacity: 0, duration: state.reducedMotion ? 0.1 : 1.2, ease: 'power2.in',
+    onComplete: () => {
+      dom.scene5.classList.remove('active');
+      dom.scene5.setAttribute('aria-hidden', 'true');
+      runCelebrationScene();
+    }
+  });
+}
+
+function runCelebrationScene() {
   dom.scene6.classList.add('active');
   dom.scene6.setAttribute('aria-hidden', 'false');
 
@@ -546,35 +562,31 @@ function showCelebration() {
   const d = state.reducedMotion ? 0.1 : 1;
   const tl = gsap.timeline();
 
-  // Eyebrow fades in first
+  // Brief hold on black, then reveal
   tl.fromTo('.celeb-eyebrow', { opacity: 0, y: 8 }, {
-    opacity: 1, y: 0, duration: d * 0.8, ease: 'power2.out', delay: 0.3
+    opacity: 1, y: 0, duration: d * 0.8, ease: 'power2.out', delay: 0.5
   });
 
-  // Heading rises — cinematic, slow
   tl.fromTo(dom.celebHeading, {
-    opacity: 0, y: state.reducedMotion ? 0 : 32
+    opacity: 0, y: state.reducedMotion ? 0 : 36
   }, {
     opacity: 1, y: 0,
-    duration: state.reducedMotion ? 0.1 : 1.8,
+    duration: state.reducedMotion ? 0.1 : 2.2,
     ease: 'power2.out'
   }, '-=0.3');
 
-  // Gold divider
   tl.fromTo('.celeb-divider', { opacity: 0, scaleX: 0 }, {
     opacity: 1, scaleX: 1, duration: d * 0.9, ease: 'power2.out'
-  }, '-=0.8');
+  }, '-=0.9');
 
-  // Sub line
   tl.fromTo(dom.celebSub, { opacity: 0 }, {
     opacity: 1, duration: d * 0.8, ease: 'power2.out'
   }, '-=0.5');
 
-  // Subtle scale-back camera pull
   if (!state.reducedMotion) {
     tl.fromTo($('celebrationContent'), { scale: 1.07 }, {
-      scale: 1, duration: 3.2, ease: 'power1.out'
-    }, '<-=1.5');
+      scale: 1, duration: 3.5, ease: 'power1.out'
+    }, '<-=2');
   }
 }
 

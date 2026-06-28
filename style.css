@@ -327,7 +327,10 @@ body.loaded { opacity: 1; }
 /* ═══════════════════════════════════════════
    SCENE 5 — CAKE (FINAL REVEAL)
 ═══════════════════════════════════════════ */
-.cake-scene { flex-direction: column; }
+.cake-scene {
+  flex-direction: column;
+  background: radial-gradient(ellipse 70% 65% at 50% 60%, #1a1205 0%, #0e0c08 45%, #0B0B0D 100%);
+}
 
 #cakeCanvas {
   position: absolute; inset: 0;
@@ -337,24 +340,48 @@ body.loaded { opacity: 1; }
 .cake-reveal-content {
   position: relative; z-index: 2;
   display: flex; flex-direction: column;
-  align-items: center; gap: 3rem;
+  align-items: center; gap: 2.5rem;
   padding: 2rem 1.5rem; text-align: center;
 }
 
-.cake-wrapper { position: relative; opacity: 0; transform: translateY(40px); }
+/* Scene label above cake */
+.cake-scene-label {
+  font-family: 'Inter', sans-serif; font-size: 0.62rem;
+  letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--accent); opacity: 0; font-weight: 400;
+}
 
-.surprise-text { max-width: 600px; }
+.cake-wrapper {
+  position: relative; opacity: 0; transform: translateY(40px);
+}
+
+/* Warm ambient glow behind the cake */
+.cake-wrapper::before {
+  content: '';
+  position: absolute;
+  bottom: -30px; left: 50%;
+  transform: translateX(-50%);
+  width: 300px; height: 80px;
+  background: radial-gradient(ellipse at center, rgba(201,168,106,0.18) 0%, transparent 70%);
+  filter: blur(20px);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.surprise-text { max-width: 580px; }
 .surprise-line {
   font-family: 'Playfair Display', serif;
-  font-size: clamp(1rem, 2.5vw, 1.3rem);
-  line-height: 1.8; color: var(--text);
-  opacity: 0; transform: translateY(12px); margin-bottom: 0.5rem;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  line-height: 1.85; color: var(--text-sec);
+  opacity: 0; transform: translateY(12px); margin-bottom: 0.4rem;
+  font-style: italic;
 }
 #sLine1 {
-  font-size: clamp(1.6rem, 4vw, 2.5rem); font-weight: 600;
+  font-size: clamp(1.8rem, 4.5vw, 2.8rem); font-weight: 600;
   color: var(--accent); letter-spacing: 0.02em;
+  font-style: normal; color: #fff;
 }
-#sLine3 { font-style: italic; color: var(--text-sec); }
+#sLine3 { color: var(--text-sec); font-size: clamp(0.88rem, 1.8vw, 1rem); }
 
 /* ─── Birthday Cake ─── */
 .cake {

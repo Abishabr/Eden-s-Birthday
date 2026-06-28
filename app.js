@@ -92,76 +92,80 @@ const AudioManager = (() => {
     orchestralGain.connect(masterGain);
   }
 
-  // Synthesize a gentle ambient drone using oscillators (no external files needed)
+  // Synthesize a very soft, gentle ambient pad (nearly inaudible — atmospheric only)
   function createAmbientTone() {
     try {
       const osc1 = ctx.createOscillator();
       const osc2 = ctx.createOscillator();
-      const osc3 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       const gain2 = ctx.createGain();
-      const gain3 = ctx.createGain();
       const reverb = ctx.createConvolver();
       const filter = ctx.createBiquadFilter();
+      const masterPad = ctx.createGain();
 
-      // Create a simple reverb impulse
-      const irLength = ctx.sampleRate * 3;
+      // Long, spacious reverb
+      const irLength = ctx.sampleRate * 5;
       const irBuffer = ctx.createBuffer(2, irLength, ctx.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const data = irBuffer.getChannelData(ch);
         for (let i = 0; i < irLength; i++) {
-          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLength, 2.5);
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLength, 3.5);
         }
       }
       reverb.buffer = irBuffer;
 
-      osc1.type = 'sine'; osc1.frequency.value = 110;
-      osc2.type = 'sine'; osc2.frequency.value = 165;
-      osc3.type = 'sine'; osc3.frequency.value = 220;
+      // Very low frequencies — felt more than heard
+      osc1.type = 'sine'; osc1.frequency.value = 55;    // sub bass A
+      osc2.type = 'sine'; osc2.frequency.value = 82.5;  // E above
 
-      gain1.gain.value = 0.12;
-      gain2.gain.value = 0.07;
-      gain3.gain.value = 0.04;
+      gain1.gain.value = 0.04;   // very quiet
+      gain2.gain.value = 0.025;
 
+      // Low-pass filter — removes any harshness
       filter.type = 'lowpass';
-      filter.frequency.value = 800;
-      filter.Q.value = 0.5;
+      filter.frequency.value = 400;
+      filter.Q.value = 0.3;
 
-      osc1.connect(gain1); osc2.connect(gain2); osc3.connect(gain3);
-      gain1.connect(filter); gain2.connect(filter); gain3.connect(filter);
+      masterPad.gain.value = 0.5;
+
+      osc1.connect(gain1); osc2.connect(gain2);
+      gain1.connect(filter); gain2.connect(filter);
       filter.connect(reverb);
-      reverb.connect(ambientGain);
+      reverb.connect(masterPad);
+      masterPad.connect(ambientGain);
 
-      osc1.start(); osc2.start(); osc3.start();
+      osc1.start(); osc2.start();
 
-      // Gentle frequency drift for organic feel
+      // Very slow, subtle drift
       const drift = () => {
         const now = ctx.currentTime;
-        osc1.frequency.setTargetAtTime(110 + Math.random() * 4 - 2, now, 3);
-        osc2.frequency.setTargetAtTime(165 + Math.random() * 4 - 2, now, 3);
+        osc1.frequency.setTargetAtTime(55 + (Math.random() * 2 - 1), now, 6);
+        osc2.frequency.setTargetAtTime(82.5 + (Math.random() * 2 - 1), now, 6);
       };
-      const driftInterval = setInterval(drift, 4000);
+      const driftInterval = setInterval(drift, 8000);
 
-      return { stop: () => { clearInterval(driftInterval); osc1.stop(); osc2.stop(); osc3.stop(); } };
+      return { stop: () => { clearInterval(driftInterval); osc1.stop(); osc2.stop(); } };
     } catch(e) { console.warn('Audio synthesis failed:', e); return null; }
   }
 
-  // Orchestral swell - richer harmonics
+  // Orchestral swell — soft warm harmonics, not loud
   function createOrchestralTone() {
     try {
-      const notes = [261.63, 329.63, 392.00, 523.25];
+      const notes = [130.81, 164.81, 196.00, 261.63];  // C3 chord — low, warm
       const oscs = [];
-      const gains = [];
       const reverb = ctx.createConvolver();
       const masterOrcGain = ctx.createGain();
-      masterOrcGain.gain.value = 0.6;
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.value = 600;
+      masterOrcGain.gain.value = 0.35;   // soft
 
-      const irLength = ctx.sampleRate * 4;
+      const irLength = ctx.sampleRate * 5;
       const irBuffer = ctx.createBuffer(2, irLength, ctx.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const data = irBuffer.getChannelData(ch);
         for (let i = 0; i < irLength; i++) {
-          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLength, 1.8);
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / irLength, 2.2);
         }
       }
       reverb.buffer = irBuffer;
@@ -169,16 +173,16 @@ const AudioManager = (() => {
       notes.forEach((freq, i) => {
         const osc = ctx.createOscillator();
         const g = ctx.createGain();
-        osc.type = i % 2 === 0 ? 'sine' : 'triangle';
+        osc.type = 'sine';
         osc.frequency.value = freq;
-        g.gain.value = 0.06 / (i + 1);
+        g.gain.value = 0.04 / (i + 1);   // quieter per harmonic
         osc.connect(g);
-        g.connect(reverb);
+        g.connect(filter);
         osc.start();
         oscs.push(osc);
-        gains.push(g);
       });
 
+      filter.connect(reverb);
       reverb.connect(masterOrcGain);
       masterOrcGain.connect(orchestralGain);
 
@@ -193,20 +197,20 @@ const AudioManager = (() => {
     if (!ambientNode) ambientNode = createAmbientTone();
     if (ambientGain) {
       ambientGain.gain.cancelScheduledValues(ctx.currentTime);
-      ambientGain.gain.setTargetAtTime(0.6, ctx.currentTime, 2);
+      ambientGain.gain.setTargetAtTime(0.3, ctx.currentTime, 3);  // gentle fade-in, low volume
     }
   }
 
   function transitionToOrchestral() {
     if (!orchNode) orchNode = createOrchestralTone();
     const now = ctx.currentTime;
-    if (ambientGain) ambientGain.gain.setTargetAtTime(0.15, now, 1.5);
-    if (orchestralGain) orchestralGain.gain.setTargetAtTime(0.8, now, 2);
+    if (ambientGain) ambientGain.gain.setTargetAtTime(0.08, now, 2);
+    if (orchestralGain) orchestralGain.gain.setTargetAtTime(0.4, now, 3);  // soft
   }
 
   function peakOrchestral() {
     const now = ctx.currentTime;
-    if (orchestralGain) orchestralGain.gain.setTargetAtTime(1.0, now, 2);
+    if (orchestralGain) orchestralGain.gain.setTargetAtTime(0.5, now, 3);  // still restrained
   }
 
   function setMute(val) {
@@ -245,13 +249,13 @@ async function initThreeJS() {
 
 function setupThreeScene(THREE) {
   const wrapper = $('canvasWrapper');
-  const W = wrapper.clientWidth || 300;
-  const H = wrapper.clientHeight || 300;
+  const W = wrapper.offsetWidth || 320;
+  const H = wrapper.offsetHeight || 320;
 
   threeRenderer = new THREE.WebGLRenderer({
     canvas: dom.threeCanvas,
     antialias: true,
-    alpha: true,
+    alpha: false,                    // solid background — box always visible
     powerPreference: 'high-performance'
   });
   threeRenderer.setSize(W, H);
@@ -260,16 +264,19 @@ function setupThreeScene(THREE) {
   threeRenderer.shadowMap.type = THREE.PCFSoftShadowMap;
   threeRenderer.toneMapping = THREE.ACESFilmicToneMapping;
   threeRenderer.toneMappingExposure = 1.2;
+  threeRenderer.setClearColor(0x0d0d10, 1);   // slightly lighter than page bg so box is visible
 
   threeScene = new THREE.Scene();
+  threeScene.background = new THREE.Color(0x0d0d10);
+
   threeCamera = new THREE.PerspectiveCamera(45, W / H, 0.1, 100);
   threeCamera.position.set(0, 0.3, 4.5);
 
   // Lighting
-  const ambient = new THREE.AmbientLight(0x1a1510, 0.4);
+  const ambient = new THREE.AmbientLight(0x3a2e1e, 1.2);   // warm, strong enough to see the box
   threeScene.add(ambient);
 
-  const keyLight = new THREE.DirectionalLight(0xfff5e0, 1.2);
+  const keyLight = new THREE.DirectionalLight(0xfff5e0, 2.2);
   keyLight.position.set(3, 5, 3);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
@@ -277,9 +284,13 @@ function setupThreeScene(THREE) {
   keyLight.shadow.camera.far = 20;
   threeScene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0xc9a86a, 0.3);
+  const fillLight = new THREE.DirectionalLight(0xc9a86a, 0.8);
   fillLight.position.set(-3, 1, -2);
   threeScene.add(fillLight);
+
+  const rimLight = new THREE.DirectionalLight(0xffeebb, 0.6);
+  rimLight.position.set(0, -2, -4);
+  threeScene.add(rimLight);
 
   pointLight1 = new THREE.PointLight(0xc9a86a, 0, 3);
   pointLight1.position.set(0, 0.5, 0);
@@ -291,23 +302,23 @@ function setupThreeScene(THREE) {
 
   // Materials
   const matteMat = new THREE.MeshStandardMaterial({
-    color: 0x0e0e10,
-    roughness: 0.92,
-    metalness: 0.08,
+    color: 0x1c1c22,       // deep charcoal — clearly distinct from #0B0B0D background
+    roughness: 0.85,
+    metalness: 0.12,
     envMapIntensity: 0.5
   });
 
   const ribbonMat = new THREE.MeshStandardMaterial({
     color: 0xc9a86a,
-    roughness: 0.3,
-    metalness: 0.6,
+    roughness: 0.28,
+    metalness: 0.65,
     envMapIntensity: 1.0
   });
 
   const lidMat = new THREE.MeshStandardMaterial({
-    color: 0x0e0e10,
-    roughness: 0.9,
-    metalness: 0.08
+    color: 0x1a1a20,       // slightly different from body for visible lid seam
+    roughness: 0.88,
+    metalness: 0.1
   });
 
   // Gift group
@@ -374,8 +385,8 @@ function setupThreeScene(THREE) {
 
   // Handle resize
   window.addEventListener('resize', () => {
-    const nw = wrapper.clientWidth;
-    const nh = wrapper.clientHeight;
+    const nw = wrapper.offsetWidth;
+    const nh = wrapper.offsetHeight;
     threeCamera.aspect = nw / nh;
     threeCamera.updateProjectionMatrix();
     threeRenderer.setSize(nw, nh);
@@ -595,13 +606,25 @@ function showScene4() {
 
 function buildCake() {
   dom.cakeWrapper.innerHTML = `
-    <div class="cake" aria-label="Birthday cake">
-      <div class="cake-candle">
-        <div class="cake-flame"></div>
+    <div class="cake" aria-label="Birthday cake with three tiers and glowing candles">
+      <div class="cake-candle-group" aria-hidden="true">
+        <div class="cake-candle"><div class="cake-flame"></div></div>
+        <div class="cake-candle"><div class="cake-flame"></div></div>
+        <div class="cake-candle"><div class="cake-flame"></div></div>
       </div>
       <div class="cake-tier cake-tier-3"></div>
       <div class="cake-tier cake-tier-2"></div>
-      <div class="cake-tier cake-tier-1"></div>
+      <div class="cake-tier cake-tier-1">
+        <div class="cake-dots">
+          <div class="cake-dot"></div>
+          <div class="cake-dot"></div>
+          <div class="cake-dot"></div>
+          <div class="cake-dot"></div>
+          <div class="cake-dot"></div>
+        </div>
+      </div>
+      <div class="cake-plate" aria-hidden="true"></div>
+      <div class="cake-glow" aria-hidden="true"></div>
     </div>
   `;
 }
@@ -895,14 +918,14 @@ async function boot() {
 
   // Init Three.js (non-blocking)
   initThreeJS().then(() => {
-    // Kick off arrival animations after Three.js is ready
-    animateArrival();
+    // Small delay ensures renderer has painted at least one frame
+    setTimeout(() => animateArrival(), 100);
   });
 
-  // If Three.js hasn't loaded within 3s, show arrival anyway
+  // If Three.js hasn't loaded within 4s, show arrival anyway
   setTimeout(() => {
     if (!state.threeReady) animateArrival();
-  }, 3000);
+  }, 4000);
 
   // Bind all event listeners
   bindEvents();

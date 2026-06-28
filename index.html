@@ -11,13 +11,20 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+
   <!-- Mute Toggle -->
   <button id="muteToggle" aria-label="Toggle sound" class="mute-btn">
-    <svg id="iconUnmuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/></svg>
-    <svg id="iconMuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none"><path d="M11 5L6 9H2v6h4l5 4V5z"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+    <svg id="iconUnmuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+      <path d="M19.07 4.93a10 10 0 010 14.14M15.54 8.46a5 5 0 010 7.07"/>
+    </svg>
+    <svg id="iconMuted" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="display:none">
+      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+      <line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/>
+    </svg>
   </button>
 
-  <!-- Scene 1: Arrival -->
+  <!-- ── SCENE 1: Arrival ─────────────────────────────── -->
   <section id="scene1" class="scene scene-arrival" aria-label="Arrival">
     <div class="arrival-content">
       <p class="label-small" id="reservedLabel">Reserved Delivery</p>
@@ -37,69 +44,103 @@
     </div>
   </section>
 
-  <!-- Scene 2: Opening overlay -->
+  <!-- ── SCENE 2: Opening (Three.js full-screen) ─────── -->
   <div id="scene2" class="scene-overlay" aria-hidden="true" aria-label="Opening sequence"></div>
 
-  <!-- Scene 3: Envelope & Letter -->
+  <!-- ── SCENE 3: Envelope & Letter ──────────────────── -->
   <div id="scene3" class="scene-overlay letter-scene" aria-hidden="true" aria-label="The Letter">
     <div class="envelope-wrapper" id="envelopeWrapper">
       <div class="envelope" id="envelope" role="button" tabindex="0" aria-label="Open the envelope">
         <div class="envelope-body">
           <div class="envelope-flap" id="envelopeFlap"></div>
-          <div class="envelope-seal" id="envelopeSeal" aria-hidden="true">
+          <div class="envelope-seal" aria-hidden="true">
             <svg viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
               <circle cx="20" cy="20" r="18" fill="#C9A86A" opacity="0.9"/>
-              <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle" font-family="Playfair Display" font-size="14" fill="#0B0B0D">E</text>
+              <text x="50%" y="55%" dominant-baseline="middle" text-anchor="middle"
+                font-family="Playfair Display" font-size="14" fill="#0B0B0D">E</text>
             </svg>
           </div>
         </div>
         <p class="envelope-hint">Click to open</p>
       </div>
     </div>
-    <!-- Letter -->
-    <div class="letter-overlay" id="letterOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Birthday letter">
-      <div class="letter-paper" id="letterPaper">
-        <div class="letter-content">
-          <p class="letter-date">28th of June, 2026</p>
-          <h2 class="letter-salutation">Dear Eden,</h2>
-          <div class="letter-body">
-            <p>There are people who move through the world quietly, leaving warmth in every room they enter — without ever trying. You are one of those rare people.</p>
-            <p>Today is yours. Not because of what you have achieved, or what you will do next, but because of who you are — the kindness in how you listen, the light in how you laugh, the depth in how you care.</p>
-            <p>On this day, I wanted you to know that your presence in this world is not ordinary. It never has been. The way you show up — for others, for the small moments, for the things most people overlook — that is something worth celebrating.</p>
-            <p>So today, let the world celebrate you.</p>
-          </div>
-          <p class="letter-closing">With admiration and warmth,</p>
-          <p class="letter-signature">Someone who sees you clearly.</p>
-          <button id="continueBtn" class="cta-btn cta-small" aria-label="Continue to the surprise">
-            <span class="cta-text">Continue</span>
-            <span class="cta-line"></span>
-          </button>
+    <div class="letter-overlay" id="letterOverlay" aria-hidden="true"
+         role="dialog" aria-modal="true" aria-label="Birthday letter">
+      <div class="letter-paper">
+        <p class="letter-date">28th of June, 2026</p>
+        <h2 class="letter-salutation">Dear Eden,</h2>
+        <div class="letter-body">
+          <p>There are people who move through the world quietly, leaving warmth in every room they enter — without ever trying. You are one of those rare people.</p>
+          <p>Today is yours. Not because of what you have achieved, or what you will do next, but because of who you are — the kindness in how you listen, the light in how you laugh, the depth in how you care.</p>
+          <p>On this day, I wanted you to know that your presence in this world is not ordinary. It never has been. The way you show up — for others, for the small moments, for the things most people overlook — that is something worth celebrating.</p>
+          <p>So today, let the world celebrate you.</p>
         </div>
+        <p class="letter-closing">With admiration and warmth,</p>
+        <p class="letter-signature">Someone who sees you clearly.</p>
+        <button id="continueBtn" class="cta-btn cta-small" aria-label="Continue to the surprise">
+          <span class="cta-text">Continue</span>
+          <span class="cta-line"></span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Scene 4: Hidden Surprise -->
-  <div id="scene4" class="scene-overlay surprise-scene" aria-hidden="true" aria-label="Hidden Surprise">
-    <canvas id="scene4Canvas"></canvas>
-    <div class="surprise-content" id="surpriseContent">
-      <div class="rose-wrapper" id="roseWrapper">
-        <img src="Assets/flower buncket.jpg" alt="A delicate flower bouquet" class="flower-bouquet" loading="lazy" />
+  <!-- ── SCENE 4: Bouquet — Emotional Peak ───────────── -->
+  <div id="scene4" class="scene-overlay bouquet-scene" aria-hidden="true" aria-label="The Bouquet">
+    <canvas id="scene4Canvas" aria-hidden="true"></canvas>
+    <div class="bouquet-content" id="bouquetContent">
+      <p class="reveal-eyebrow" id="bouquetEyebrow">For You</p>
+      <div class="bouquet-stage" id="bouquetStage">
+        <!-- SSS glow ring -->
+        <div class="sss-ring" aria-hidden="true"></div>
+        <!-- Depth blur backdrop -->
+        <div class="bouquet-backdrop" aria-hidden="true"></div>
+        <!-- Bouquet image with rotation wrapper -->
+        <div class="bouquet-rotator" id="bouquetRotator">
+          <img
+            src="Assets/flower buncket.jpg"
+            alt="A flower bouquet chosen with love"
+            class="flower-bouquet"
+            id="bouquetImg"
+            loading="lazy"
+          />
+          <!-- Subsurface scattering overlay -->
+          <div class="sss-overlay" aria-hidden="true"></div>
+        </div>
+        <!-- Soft ground shadow -->
+        <div class="bouquet-shadow" aria-hidden="true"></div>
       </div>
+      <div class="bouquet-text" id="bouquetText">
+        <p class="bouquet-line" id="bLine1">Chosen with care.</p>
+        <p class="bouquet-line" id="bLine2">Every petal, a thought of you.</p>
+        <button id="toCakeBtn" class="cta-btn cta-ghost" aria-label="Continue to final surprise">
+          <span class="cta-text">One more thing</span>
+          <span class="cta-line"></span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SCENE 5: Cake — Final Reveal ────────────────── -->
+  <div id="scene5" class="scene-overlay cake-scene" aria-hidden="true" aria-label="The Final Surprise">
+    <canvas id="cakeCanvas" aria-hidden="true"></canvas>
+    <div class="cake-reveal-content" id="cakeRevealContent">
       <div class="cake-wrapper" id="cakeWrapper" aria-hidden="true"></div>
       <div class="surprise-text" id="surpriseText">
         <p class="surprise-line" id="sLine1">Happy Birthday.</p>
-        <p class="surprise-line" id="sLine2">May this year bring you peace, happiness, unforgettable adventures,<br />meaningful memories, and endless reasons to smile.</p>
+        <p class="surprise-line" id="sLine2">May this year bring you peace, happiness, unforgettable<br />adventures, meaningful memories, and endless reasons to smile.</p>
         <p class="surprise-line" id="sLine3">Thank you for simply being yourself.</p>
       </div>
     </div>
   </div>
 
-  <!-- Scene 5: Celebration -->
-  <div id="scene5" class="scene-overlay celebration-scene" aria-hidden="true" aria-label="Celebration">
-    <canvas id="celebrationCanvas"></canvas>
+  <!-- ── SCENE 6: Celebration ────────────────────────── -->
+  <div id="scene6" class="scene-overlay celebration-scene" aria-hidden="true" aria-label="Celebration">
+    <canvas id="celebrationCanvas" aria-hidden="true"></canvas>
     <div class="celebration-content" id="celebrationContent">
+      <p class="celeb-eyebrow" aria-hidden="true">— For You —</p>
       <h1 class="celebration-heading" id="celebHeading">Happy Birthday, Eden</h1>
+      <div class="celeb-divider" aria-hidden="true"></div>
       <p class="celebration-sub" id="celebSub">Made especially for you.</p>
     </div>
   </div>
